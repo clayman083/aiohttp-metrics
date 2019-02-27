@@ -5,9 +5,6 @@ python:
 
 sudo: required
 
-services:
-  - docker
-
 addons:
   apt:
     packages:
@@ -21,6 +18,9 @@ jobs:
         - pip install tox
         - tox
     - stage: "publish"
+      name: "Publish"
       if: tag is present
       script:
         - pip install flit
+        - flit build
+        - flit publish
