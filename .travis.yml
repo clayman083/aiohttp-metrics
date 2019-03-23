@@ -1,26 +1,42 @@
 ---
-language: python
-python:
-  - "3.7-dev"
+
+dist: xenial
+cache:
+  directories:
+    - $HOME/.cache/pip
 
 sudo: required
 
-addons:
-  apt:
-    packages:
-    - python-pip
+language: python
+
+install:
+  - pip install --upgrade tox
+
+script:
+  - tox
 
 jobs:
   include:
-    - stage: "test"
-      name: "Test"
-      script:
-        - pip install tox
-        - tox
-    - stage: "publish"
-      name: "Publish"
+    - stage: lint
+      python: 3.7
+      env:
+        - TOXENV=lint
+
+    - stage: test
+      python: 3.5
+      env:
+        - TOXENV=py35
+    - stage: test
+      python: 3.6
+      env:
+        - TOXENV=py36
+    - stage: test
+      python: 3.7
+      env:
+        - TOXENV=py37
+
+    - stage: publish
       if: tag is present
       script:
-        - pip install flit
-        - flit build
-        - flit publish
+        - pip install twine
+        - make release

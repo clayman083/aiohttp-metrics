@@ -1,9 +1,9 @@
 [run]
 branch = True
-omit =
-    aiohttp_metrics/management/*
-
 source = aiohttp_metrics
 
 [html]
 directory = tests/coverage
+
+[xml]
+output = tests/coverage.xml
