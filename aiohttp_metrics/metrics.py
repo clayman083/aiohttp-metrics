@@ -1,15 +1,25 @@
 import time
+from contextvars import ContextVar
 from typing import Awaitable, Callable, Dict, Union
 
 import prometheus_client  # type: ignore
 from aiohttp import web
 from prometheus_client import (
-    CollectorRegistry, Counter, Enum, Gauge, Histogram, Info, Summary  # type: ignore
+    CollectorRegistry,
+    Counter,
+    Enum,
+    Gauge,
+    Histogram,
+    Info,
+    Summary,  # type: ignore
 )
 
 
 Handler = Callable[[web.Request], Awaitable[web.Response]]
 Metric = Union[Counter, Gauge, Summary, Histogram, Info, Enum]
+
+
+APP_NAME = ContextVar("APP_NAME", default="")
 
 
 @web.middleware
@@ -19,18 +29,22 @@ async def middleware(request: web.Request, handler: Handler) -> web.Response:
     """
 
     start_time = time.monotonic()
-    request.app['metrics']['requests_in_progress'].labels(
-        request.app['app_name'], request.path, request.method).inc()
+    request.app["metrics"]["requests_in_progress"].labels(
+        APP_NAME.get(), request.path, request.method
+    ).inc()
 
     response = await handler(request)
 
     resp_time = time.monotonic() - start_time
-    request.app['metrics']['requests_latency'].labels(
-        request.app['app_name'], request.path).observe(resp_time)
-    request.app['metrics']['requests_in_progress'].labels(
-        request.app['app_name'], request.path, request.method).dec()
-    request.app['metrics']['requests_total'].labels(
-        request.app['app_name'], request.method, request.path, response.status).inc()
+    request.app["metrics"]["requests_latency"].labels(
+        APP_NAME.get(), request.path
+    ).observe(resp_time)
+    request.app["metrics"]["requests_in_progress"].labels(
+        APP_NAME.get(), request.path, request.method
+    ).dec()
+    request.app["metrics"]["requests_total"].labels(
+        APP_NAME.get(), request.method, request.path, response.status
+    ).inc()
 
     return response
 
@@ -42,7 +56,7 @@ async def handler(request: web.Request) -> web.Response:
 
     resp = web.Response(
         body=prometheus_client.generate_latest(
-            registry=request.app['metrics_registry']
+            registry=request.app["metrics_registry"]
         )
     )
 
@@ -50,35 +64,42 @@ async def handler(request: web.Request) -> web.Response:
     return resp
 
 
-def setup(app: web.Application, *, path: str = '/-/metrics',
-          metrics: Dict[str, Metric] = None) -> None:
+def setup(
+    app: web.Application,
+    *,
+    app_name: str,
+    path: str = "/-/metrics",
+    metrics: Dict[str, Metric] = None
+) -> None:
+    APP_NAME.set(app_name)
 
-    assert 'app_name' in app, 'Please set app name for metrics'
-
-    app['metrics_registry'] = CollectorRegistry()
-    app['metrics'] = {
-        'requests_total': Counter(
-            'requests_total', 'Total request count',
-            ('app_name', 'method', 'endpoint', 'http_status'),
-            registry=app['metrics_registry']
+    app["metrics_registry"] = CollectorRegistry()
+    app["metrics"] = {
+        "requests_total": Counter(
+            "requests_total",
+            "Total request count",
+            ("app_name", "method", "endpoint", "http_status"),
+            registry=app["metrics_registry"],
         ),
-        'requests_latency': Histogram(
-            'requests_latency_seconds', 'Request latency',
-            ('app_name', 'endpoint'),
-            registry=app['metrics_registry']
+        "requests_latency": Histogram(
+            "requests_latency_seconds",
+            "Request latency",
+            ("app_name", "endpoint"),
+            registry=app["metrics_registry"],
         ),
-        'requests_in_progress': Gauge(
-            'requests_in_progress_total', 'Requests in progress',
-            ('app_name', 'endpoint', 'method'),
-            registry=app['metrics_registry']
-        )
+        "requests_in_progress": Gauge(
+            "requests_in_progress_total",
+            "Requests in progress",
+            ("app_name", "endpoint", "method"),
+            registry=app["metrics_registry"],
+        ),
     }
 
     if metrics:
         for key, metric in metrics.items():
-            app['metrics'][key] = metric
-            app['metrics_registry'].register(metric)
+            app["metrics"][key] = metric
+            app["metrics_registry"].register(metric)
 
     app.middlewares.append(middleware)  # type: ignore
 
-    app.router.add_get(path, handler, name='metrics')
+    app.router.add_get(path, handler, name="metrics")

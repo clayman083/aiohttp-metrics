@@ -1,4 +1,4 @@
 from .metrics import setup
 
 
-__all__ = ('setup', )
+__all__ = ("setup",)
