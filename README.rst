@@ -1,7 +1,7 @@
 aiohttp_metrics
 ===============
-.. image:: https://travis-ci.com/clayman74/aiohttp-metrics.svg?branch=master
-    :target: https://travis-ci.com/clayman74/aiohttp-metrics
+.. image:: https://travis-ci.com/clayman083/aiohttp-metrics.svg?branch=master
+    :target: https://travis-ci.com/clayman083/aiohttp-metrics
 .. image:: https://badge.fury.io/py/aiohttp_metrics.svg
     :target: https://badge.fury.io/py/aiohttp_metrics
 
@@ -15,7 +15,7 @@ __ aiohttp_web_
 Installation
 ------------
 
-    $ pip install aiohttp_metrics
+    $ pip install https://github.com/clayman083/aiohttp-metrics.git#v0.1.3
 
 
 Usage
@@ -45,7 +45,9 @@ A trivial usage example:
         app['app_name'] = 'foo'
 
         setup_metrics(app)
+
         app.router.add_get('/', handler)
+
         return app
 
 
@@ -91,7 +93,7 @@ Developing
 
 Install for local development::
 
-    $ flit install -s
+    $ poetry install
 
 Run tests with::
 
