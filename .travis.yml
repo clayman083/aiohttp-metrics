@@ -10,7 +10,8 @@ sudo: required
 language: python
 
 install:
-  - pip install --upgrade tox
+  - pip install -U pip
+  - pip install poetry tox
 
 script:
   - tox
