@@ -1,5 +1,4 @@
 import time
-from contextvars import ContextVar
 from typing import Awaitable, Callable, Dict, Union
 
 import prometheus_client  # type: ignore
@@ -19,9 +18,6 @@ Handler = Callable[[web.Request], Awaitable[web.Response]]
 Metric = Union[Counter, Gauge, Summary, Histogram, Info, Enum]
 
 
-APP_NAME = ContextVar("APP_NAME", default="")
-
-
 @web.middleware
 async def middleware(request: web.Request, handler: Handler) -> web.Response:
     """
@@ -30,20 +26,20 @@ async def middleware(request: web.Request, handler: Handler) -> web.Response:
 
     start_time = time.monotonic()
     request.app["metrics"]["requests_in_progress"].labels(
-        APP_NAME.get(), request.path, request.method
+        request.app["app_name"], request.path, request.method
     ).inc()
 
     response = await handler(request)
 
     resp_time = time.monotonic() - start_time
     request.app["metrics"]["requests_latency"].labels(
-        APP_NAME.get(), request.path
+        request.app["app_name"], request.path
     ).observe(resp_time)
     request.app["metrics"]["requests_in_progress"].labels(
-        APP_NAME.get(), request.path, request.method
+        request.app["app_name"], request.path, request.method
     ).dec()
     request.app["metrics"]["requests_total"].labels(
-        APP_NAME.get(), request.method, request.path, response.status
+        request.app["app_name"], request.method, request.path, response.status
     ).inc()
 
     return response
@@ -67,11 +63,10 @@ async def handler(request: web.Request) -> web.Response:
 def setup(
     app: web.Application,
     *,
-    app_name: str,
     path: str = "/-/metrics",
     metrics: Dict[str, Metric] = None
 ) -> None:
-    APP_NAME.set(app_name)
+    assert "app_name" in app
 
     app["metrics_registry"] = CollectorRegistry()
     app["metrics"] = {

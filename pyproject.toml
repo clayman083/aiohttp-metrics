@@ -1,0 +1,42 @@
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "aiohttp_metrics"
+version = "0.1.3"
+description = "Prometheus metrics for aiohttp-based microservices"
+authors = ["Kirill Sumorokov <sumorokov.k@gmail.com>"]
+license = "MIT"
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Framework :: AsyncIO",
+]
+packages = [
+    { include = "aiohttp_metrics", from = "src" },
+]
+
+[tool.poetry.dependencies]
+aiohttp = "^3.6.0"
+prometheus_client = "^0.7.1"
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+coverage = "*"
+faker = "*"
+flake8 = "*"
+flake8-bugbear = "*"
+flake8-builtins-unleashed = "*"
+flake8-comprehensions = "*"
+flake8-import-order = "*"
+flake8-print = "*"
+flake8-pytest = "*"
+mypy = "*"
+pytest = "*"
+pytest-aiohttp = "*"
+rope = "*"
