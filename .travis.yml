@@ -17,13 +17,22 @@ script:
 
 jobs:
   include:
+    - stage: lint
+      python: 3.8
+      env:
+        - TOXENV=lint
+      script:
+        - tox
+
     - stage: test
       python: 3.7
       env:
         - TOXENV=py37
-
-    - stage: publish
-      if: tag is present
       script:
-        - pip install twine
-        - make release
+        - tox
+    - stage: test
+      python: 3.8
+      env:
+        - TOXENV=py38
+      script:
+        - tox
