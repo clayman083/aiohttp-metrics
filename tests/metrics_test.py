@@ -6,7 +6,9 @@ from aiohttp_metrics import setup as setup_metrics
 
 async def test_setup_handler():
     app = web.Application()
-    setup_metrics(app, app_name="foo")
+    app["app_name"] = "foo"
+
+    setup_metrics(app)
 
     assert "metrics" in app.router.named_resources()
     assert (
@@ -16,7 +18,9 @@ async def test_setup_handler():
 
 async def test_default_metrics(aiohttp_client):
     app = web.Application()
-    setup_metrics(app, app_name="foo")
+    app["app_name"] = "foo"
+
+    setup_metrics(app)
 
     client = await aiohttp_client(app)
 
@@ -33,11 +37,12 @@ async def test_default_metrics(aiohttp_client):
 
 async def test_add_custom_metrics(aiohttp_client):
     app = web.Application()
+    app["app_name"] = "foo"
 
     metric = prometheus_client.Counter(
         "users_registered", "Total registered users count"
     )
-    setup_metrics(app, app_name="foo", metrics={"users_registered": metric})
+    setup_metrics(app, metrics={"users_registered": metric})
 
     assert "users_registered" in app["metrics"]
 
